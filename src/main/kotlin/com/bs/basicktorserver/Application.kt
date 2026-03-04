@@ -12,6 +12,9 @@ fun main() {
             get("/") {
                 call.respondText("Hello, Ktor!")
             }
+            get("/about") {
+                call.respondText("About our API")
+            }
         }
     }.start(wait = true)
 }
