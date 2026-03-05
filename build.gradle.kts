@@ -33,7 +33,9 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
-    implementation("com.h2database:h2:$h2Version") // or your DB driver (Postgres, MySQL, etc.)
+    implementation("com.h2database:h2:$h2Version")
+    implementation("io.ktor:ktor-server-host-common:3.4.0")
+    implementation("io.ktor:ktor-server-status-pages:3.4.0") // or your DB driver (Postgres, MySQL, etc.)
 
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")

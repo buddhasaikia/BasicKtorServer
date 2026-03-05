@@ -1,6 +1,7 @@
-package com.bs.basicktorserver.routes
+package com.bs.basicktorserver.ext
 
 import com.bs.basicktorserver.exposed.Users
+import com.bs.basicktorserver.model.Profile
 import com.bs.basicktorserver.model.RegistrationForm
 import io.ktor.http.*
 import io.ktor.server.request.*
@@ -10,10 +11,26 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 
+fun Route.pagesRouting() {
+    get("/") {
+        call.respondText("Hello, Ktor!")
+    }
+
+    get("/about") {
+        call.respondText("About our API")
+    }
+
+    get("/profile") {
+        val myProfile = Profile("Alex", 25)
+        // Respond with the profile data as JSON
+        call.respond(myProfile)
+    }
+}
+
 fun Route.userRouting() {
     route("/users") {
+
         get {
-            // Logic to get all users from the database and respond with JSON
             val allUsers = transaction {
                 Users.selectAll().map { row ->
                     RegistrationForm(
@@ -25,6 +42,7 @@ fun Route.userRouting() {
             }
             call.respond(allUsers)
         }
+
         post("/register") {
             val from = call.receive<RegistrationForm>()
             println("Received registration form: $from")
@@ -34,6 +52,7 @@ fun Route.userRouting() {
             }
             call.respond(HttpStatusCode.Created, "Registration successful for ${from.username}")
         }
+
         put("/{id}") {
             // 1. Extract the ID from the URL path
             val userId = call.parameters["id"]
