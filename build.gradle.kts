@@ -1,5 +1,8 @@
-val kotlin_version: String by project
-val logback_version: String by project
+val kotlinVersion: String by project
+val ktorVersion: String by project
+val logbackVersion: String by project
+val exposedVersion: String by project
+val h2Version: String by project
 
 plugins {
     kotlin("jvm") version "2.3.0"
@@ -20,12 +23,18 @@ kotlin {
 dependencies {
     implementation("io.ktor:ktor-server-core-jvm")
     implementation("io.ktor:ktor-server-netty")
-    implementation("ch.qos.logback:logback-classic:$logback_version")
+    implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("io.ktor:ktor-server-core")
     implementation("io.ktor:ktor-server-config-yaml")
-    implementation("io.ktor:ktor-server-content-negotiation:3.4.0")
-    implementation("io.ktor:ktor-serialization-gson:3.4.0")
-    implementation("io.ktor:ktor-server-content-negotiation:3.4.0")
+    implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-gson:$ktorVersion")
+    implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
+
+    implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
+    implementation("com.h2database:h2:$h2Version") // or your DB driver (Postgres, MySQL, etc.)
+
     testImplementation("io.ktor:ktor-server-test-host")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
 }
