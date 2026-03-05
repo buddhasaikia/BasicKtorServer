@@ -12,6 +12,7 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -56,6 +57,24 @@ fun main() {
                     }
                 }
                 call.respond(allUsers)
+            }
+            put("/users/{id}") {
+                // 1. Extract the ID from the URL path
+                val userId = call.parameters["id"]
+
+                // 2. Receive the new data from the user
+                val updatedInfo = call.receive<RegistrationForm>()
+
+                // (Conceptual) Database update would happen here using userId and updatedInfo
+
+                // 3. Respond with a success status
+                call.respond(HttpStatusCode.OK, "User $userId updated successfully!")
+            }
+
+            delete("/users/{id}") {
+                val userId = call.parameters["id"]
+                //Delete operation would happen here using userId
+                call.respond(HttpStatusCode.OK, "User $userId deleted successfully!")
             }
         }
     }.start(wait = true)
