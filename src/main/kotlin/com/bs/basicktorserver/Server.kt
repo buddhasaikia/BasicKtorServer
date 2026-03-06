@@ -1,6 +1,5 @@
 package com.bs.basicktorserver
 
-import com.bs.basicktorserver.ext.module
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*

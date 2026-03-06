@@ -1,4 +1,4 @@
-package com.bs.basicktorserver.exposed
+package com.bs.basicktorserver.data.models
 
 import org.jetbrains.exposed.sql.Table
 
