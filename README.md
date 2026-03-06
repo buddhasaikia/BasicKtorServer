@@ -9,12 +9,18 @@ Here are some useful links to get you started:
 - The [Ktor Slack chat](https://app.slack.com/client/T09229ZC6/C0A974TJ9). You'll need
   to [request an invite](https://surveys.jetbrains.com/s3/kotlin-slack-sign-up) to join.
 
+## Tutorial
+
+A comprehensive step-by-step tutorial covering server-side development with Ktor is available here:
+
+- [Building a REST API with Ktor: A Complete Tutorial](ktor_tutorial.md)
+
 ## Features
 
 Here's a list of features included in this project:
 
 | Name                                               | Description                                                 |
-|----------------------------------------------------|-------------------------------------------------------------|
+| -------------------------------------------------- | ----------------------------------------------------------- |
 | [Routing](https://start.ktor.io/p/routing-default) | Allows to define structured routes and associated handlers. |
 
 ## Building & Running
@@ -22,7 +28,7 @@ Here's a list of features included in this project:
 To build or run the project, use one of the following tasks:
 
 | Task                                    | Description                                                          |
-|-----------------------------------------|----------------------------------------------------------------------|
+| --------------------------------------- | -------------------------------------------------------------------- |
 | `./gradlew test`                        | Run the tests                                                        |
 | `./gradlew build`                       | Build everything                                                     |
 | `./gradlew buildFatJar`                 | Build an executable JAR of the server with all dependencies included |
@@ -37,4 +43,3 @@ If the server starts successfully, you'll see the following output:
 2024-12-04 14:32:45.584 [main] INFO  Application - Application started in 0.303 seconds.
 2024-12-04 14:32:45.682 [main] INFO  Application - Responding at http://0.0.0.0:8080
 ```
-
