@@ -5,14 +5,17 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.bs.basicktorserver.config.Config
 import com.bs.basicktorserver.data.models.Users
 import com.bs.basicktorserver.model.Profile
+import com.bs.basicktorserver.model.RegisterRequest
 import com.bs.basicktorserver.model.RegistrationForm
 import com.bs.basicktorserver.model.UserCredentials
 import io.ktor.http.*
-import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
@@ -35,28 +38,29 @@ fun Route.pagesRouting() {
     post("/login") {
         // 1. Receive the username and password from the user
         val credentials = call.receive<UserCredentials>()
-        val isValidUser = checkDatabaseForUser(credentials.username, credentials.password)
-        if (isValidUser) {
-            // Generate the JWT
-            val token = JWT.create()
-                .withAudience(Config.JWT_AUDIENCE)
-                .withIssuer(Config.JWT_ISSUER)
-                .withClaim("username", credentials.username)
-                // Tokens expire! Let's say in 600,000 milliseconds (10 minute) for testing
-                .withExpiresAt(Date(System.currentTimeMillis() + 600000))
-                .sign(Algorithm.HMAC256(Config.JWT_SECRET)) // Sign it securely
-
-            call.respond<HashMap<String, String>>(hashMapOf("token" to token))
-        } else {
+        val isValidUser = isValidUser(credentials.username, credentials.password)
+        if (!isValidUser) {
             call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
+            return@post
         }
+        // Generate the JWT
+        val token = JWT.create()
+            .withAudience(Config.JWT_AUDIENCE)
+            .withIssuer(Config.JWT_ISSUER)
+            .withClaim("username", credentials.username)
+            // Tokens expire! Let's say in 600,000 milliseconds (10 minute) for testing
+            .withExpiresAt(Date(System.currentTimeMillis() + 600000))
+            .sign(Algorithm.HMAC256(Config.JWT_SECRET)) // Sign it securely
+
+        call.respond<HashMap<String, String>>(hashMapOf("token" to token))
     }
 }
 
-fun checkDatabaseForUser(username: String, password: String): Boolean {
-    // This is a placeholder function. In a real application, you would query your database here.
-    // For demonstration purposes, let's assume we have a user "testuser" with password "password123".
-    return username == "testuser" && password == "password123"
+fun isValidUser(username: String, password: String): Boolean {
+    val isValid = transaction {
+        Users.select { Users.username eq username and (Users.password eq password) }.singleOrNull() != null
+    }
+    return isValid
 }
 
 fun Route.userRouting() {
@@ -77,13 +81,24 @@ fun Route.userRouting() {
         }
 
         post("/register") {
-            val from = call.receive<RegistrationForm>()
-            println("Received registration form: $from")
-            Users.insert {
-                it[username] = from.username
-                it[email] = from.email
+            val registerRequest = call.receive<RegisterRequest>()
+            println("Received registration form: $registerRequest")
+            val isUsernameTaken = transaction {
+                Users.select { Users.username eq registerRequest.username }.singleOrNull() != null
             }
-            call.respond(HttpStatusCode.Created, "Registration successful for ${from.username}")
+            if (isUsernameTaken) {
+                call.respond(HttpStatusCode.Conflict, "Username already exists")
+                return@post
+            }
+
+            transaction {
+                Users.insert {
+                    it[username] = registerRequest.username
+                    it[email] = registerRequest.email
+                    it[password] = registerRequest.password
+                }
+            }
+            call.respond(HttpStatusCode.Created, "Registration successful for ${registerRequest.username}")
         }
 
         put("/{id}") {
