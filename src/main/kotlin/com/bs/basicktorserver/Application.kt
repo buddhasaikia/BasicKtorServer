@@ -6,6 +6,8 @@ import com.bs.basicktorserver.config.Config
 import com.bs.basicktorserver.data.DatabaseFactory
 import com.bs.basicktorserver.exceptions.UserNotFoundException
 import com.bs.basicktorserver.model.ErrorResponse
+import com.bs.basicktorserver.routes.authRouting
+import com.bs.basicktorserver.routes.noteRouting
 import com.bs.basicktorserver.routes.pagesRouting
 import com.bs.basicktorserver.routes.userRouting
 import io.ktor.http.*
@@ -69,6 +71,8 @@ fun Application.module() {
     // Register your modularized routes here
     routing {
         pagesRouting()
+        authRouting()
         userRouting()
+        noteRouting()
     }
 }
