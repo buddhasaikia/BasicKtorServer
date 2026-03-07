@@ -18,6 +18,7 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.mindrot.jbcrypt.BCrypt
 import java.util.*
 
 fun Route.pagesRouting() {
@@ -56,15 +57,31 @@ fun Route.pagesRouting() {
     }
 }
 
-fun isValidUser(username: String, password: String): Boolean {
-    val isValid = transaction {
-        Users.select { Users.username eq username and (Users.password eq password) }.singleOrNull() != null
-    }
-    return isValid
-}
-
 fun Route.userRouting() {
     route("/users") {
+        post("/register") {
+            val registerRequest = call.receive<RegisterRequest>()
+            println("Received registration form: $registerRequest")
+            val isUsernameTaken = transaction {
+                Users.select { Users.username eq registerRequest.username }.singleOrNull() != null
+            }
+            if (isUsernameTaken) {
+                call.respond(HttpStatusCode.Conflict, "Username already exists")
+                return@post
+            }
+
+            val hashPassword = BCrypt.hashpw(registerRequest.password, BCrypt.gensalt())
+
+            transaction {
+                Users.insert {
+                    it[username] = registerRequest.username
+                    it[email] = registerRequest.email
+                    it[password] = hashPassword
+                }
+            }
+            call.respond(HttpStatusCode.Created, "Registration successful for ${registerRequest.username}")
+        }
+
         authenticate(Config.JWT_NAME) {
             get {
                 val allUsers = transaction {
@@ -78,27 +95,6 @@ fun Route.userRouting() {
                 }
                 call.respond(allUsers)
             }
-        }
-
-        post("/register") {
-            val registerRequest = call.receive<RegisterRequest>()
-            println("Received registration form: $registerRequest")
-            val isUsernameTaken = transaction {
-                Users.select { Users.username eq registerRequest.username }.singleOrNull() != null
-            }
-            if (isUsernameTaken) {
-                call.respond(HttpStatusCode.Conflict, "Username already exists")
-                return@post
-            }
-
-            transaction {
-                Users.insert {
-                    it[username] = registerRequest.username
-                    it[email] = registerRequest.email
-                    it[password] = registerRequest.password
-                }
-            }
-            call.respond(HttpStatusCode.Created, "Registration successful for ${registerRequest.username}")
         }
 
         put("/{id}") {
@@ -120,4 +116,16 @@ fun Route.userRouting() {
             call.respond(HttpStatusCode.OK, "User $userId deleted successfully!")
         }
     }
+}
+
+fun isValidUser(username: String, password: String): Boolean {
+    val userRecord = transaction {
+        Users.select { Users.username eq username }.singleOrNull()
+    }
+    if (userRecord == null) {
+        return false
+    }
+    val storedHash = userRecord[Users.password]
+    val isPasswordMatched = BCrypt.checkpw(password, storedHash)
+    return isPasswordMatched
 }

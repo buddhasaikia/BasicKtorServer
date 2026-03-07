@@ -3,6 +3,7 @@ val ktorVersion: String by project
 val logbackVersion: String by project
 val exposedVersion: String by project
 val h2Version: String by project
+val jbcryptVersion: String by project
 
 plugins {
     kotlin("jvm") version "2.3.0"
@@ -21,6 +22,7 @@ kotlin {
 }
 
 dependencies {
+    // Ktor Server Dependencies
     implementation("io.ktor:ktor-server-core-jvm")
     implementation("io.ktor:ktor-server-netty")
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
@@ -38,11 +40,11 @@ dependencies {
     implementation("io.ktor:ktor-server-status-pages:$ktorVersion") // or your DB driver (Postgres, MySQL, etc.)
     implementation("io.ktor:ktor-server-auth:$ktorVersion")
     implementation("io.ktor:ktor-server-auth-jwt:${ktorVersion}")
+    implementation("org.mindrot:jbcrypt:${jbcryptVersion}")
 
     // Ktor Client Dependencies
     implementation("io.ktor:ktor-client-core:${ktorVersion}")
     implementation("io.ktor:ktor-client-cio:${ktorVersion}")
-    // The engine that runs the client
     implementation("io.ktor:ktor-client-content-negotiation:${ktorVersion}")
 
     testImplementation("io.ktor:ktor-server-test-host")

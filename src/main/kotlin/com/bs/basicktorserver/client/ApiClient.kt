@@ -27,8 +27,8 @@ class ApiClient {
             contentType(ContentType.Application.Json)
             setBody(
                 UserCredentials(
-                    username = "testuser",
-                    password = "password123"
+                    username = "buddha",
+                    password = "123456"
                 )
             )
         }

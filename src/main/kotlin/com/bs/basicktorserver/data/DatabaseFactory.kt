@@ -19,6 +19,7 @@ object DatabaseFactory {
             Users.insert {
                 it[username] = "testuser"
                 it[email] = "testuser@gmailcom"
+                it[password] = "password123"
             }
         }
     }
