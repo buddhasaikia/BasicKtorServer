@@ -3,17 +3,15 @@ package com.bs.basicktorserver.routes
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.bs.basicktorserver.config.Config
+import com.bs.basicktorserver.data.models.Notes
 import com.bs.basicktorserver.data.models.Users
-import com.bs.basicktorserver.model.Profile
-import com.bs.basicktorserver.model.RegisterRequest
-import com.bs.basicktorserver.model.RegistrationForm
-import com.bs.basicktorserver.model.UserCredentials
+import com.bs.basicktorserver.model.*
 import io.ktor.http.*
 import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
@@ -116,6 +114,55 @@ fun Route.userRouting() {
             call.respond(HttpStatusCode.OK, "User $userId deleted successfully!")
         }
     }
+
+    authenticate(Config.JWT_NAME) {
+        post("/notes") {
+            // 2. Extract the username claim from the JWT
+            val username = getUserNameFromToken(call)
+            if (username == null) {
+                call.respond(HttpStatusCode.Unauthorized, "Invalid token: username claim missing")
+                return@post
+            }
+            val noteRequest = call.receive<NoteRequest>()
+            val wasCreated = transaction {
+                val usrId = Users.select { Users.username eq username }.singleOrNull()?.get(Users.id)
+                Notes.insert {
+                    it[Notes.userId] = usrId ?: 0
+                    it[Notes.title] = noteRequest.title
+                    it[Notes.content] = noteRequest.content
+                }
+                return@transaction true
+            }
+            if (wasCreated) {
+                call.respond(HttpStatusCode.Created, "Note created successfully for user $username")
+            } else {
+                call.respond(HttpStatusCode.InternalServerError, "Failed to create note for user $username")
+            }
+        }
+        get("/notes") {
+            val username = getUserNameFromToken(call)
+            if (username == null) {
+                call.respond(HttpStatusCode.Unauthorized, "Invalid token: username claim missing")
+                return@get
+            }
+            val userNotes = transaction {
+                val usrId = Users.select { Users.username eq username }.singleOrNull()?.get(Users.id)
+                Notes.select { Notes.userId eq (usrId ?: 0) }.map { row ->
+                    NoteResponse(
+                        id = row[Notes.id],
+                        title = row[Notes.title],
+                        content = row[Notes.content]
+                    )
+                }
+            }
+            call.respond(userNotes)
+        }
+    }
+}
+
+fun getUserNameFromToken(call: RoutingCall): String? {
+    val principal = call.principal<JWTPrincipal>()
+    return principal?.payload?.getClaim("username")?.asString()
 }
 
 fun isValidUser(username: String, password: String): Boolean {
