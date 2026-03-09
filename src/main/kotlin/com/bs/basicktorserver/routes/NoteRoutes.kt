@@ -1,19 +1,15 @@
 package com.bs.basicktorserver.routes
 
 import com.bs.basicktorserver.config.Config
-import com.bs.basicktorserver.data.models.Notes
-import com.bs.basicktorserver.data.models.Users
+import com.bs.basicktorserver.data.repository.NoteRepository
+import com.bs.basicktorserver.data.repository.UserRepository
 import com.bs.basicktorserver.model.NoteRequest
-import com.bs.basicktorserver.model.NoteResponse
 import io.ktor.http.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.transactions.transaction
 
 fun Route.noteRouting() {
     authenticate(Config.JWT_NAME) {
@@ -26,21 +22,13 @@ fun Route.noteRouting() {
                     return@post
                 }
                 val noteRequest = call.receive<NoteRequest>()
-                val wasCreated = transaction {
-                    val usrId = Users.select { Users.username eq username }.singleOrNull()?.get(Users.id)
-                    if (usrId == null) return@transaction false
-                    Notes.insert {
-                        it[Notes.userId] = usrId
-                        it[Notes.title] = noteRequest.title
-                        it[Notes.content] = noteRequest.content
-                    }
-                    return@transaction true
-                }
-                if (wasCreated) {
-                    call.respond(HttpStatusCode.Created, "Note created successfully for user $username")
-                } else {
+                val userId = UserRepository.findIdByUsername(username)
+                if (userId == null) {
                     call.respond(HttpStatusCode.InternalServerError, "Failed to create note for user $username")
+                    return@post
                 }
+                NoteRepository.createNote(userId, noteRequest.title, noteRequest.content)
+                call.respond(HttpStatusCode.Created, "Note created successfully for user $username")
             }
             get {
                 val username = getUserNameFromToken(call)
@@ -48,17 +36,12 @@ fun Route.noteRouting() {
                     call.respond(HttpStatusCode.Unauthorized, "Invalid token: username claim missing")
                     return@get
                 }
-                val userNotes = transaction {
-                    val usrId = Users.select { Users.username eq username }.singleOrNull()?.get(Users.id)
-                    if (usrId == null) return@transaction false
-                    Notes.select { Notes.userId eq usrId }.map { row ->
-                        NoteResponse(
-                            id = row[Notes.id],
-                            title = row[Notes.title],
-                            content = row[Notes.content]
-                        )
-                    }
+                val userId = UserRepository.findIdByUsername(username)
+                if (userId == null) {
+                    call.respond(HttpStatusCode.Unauthorized, "User not found")
+                    return@get
                 }
+                val userNotes = NoteRepository.getNotesForUser(userId)
                 call.respond(userNotes)
             }
 
@@ -74,14 +57,12 @@ fun Route.noteRouting() {
                     return@put
                 }
                 val noteRequest = call.receive<NoteRequest>()
-                val wasUpdated = transaction {
-                    val usrId = Users.select { Users.username eq username }.singleOrNull()?.get(Users.id)
-                    if (usrId == null) return@transaction false
-                    Notes.update({ (Notes.id eq noteId) and (Notes.userId eq usrId) }) {
-                        it[title] = noteRequest.title
-                        it[content] = noteRequest.content
-                    } > 0
+                val userId = UserRepository.findIdByUsername(username)
+                if (userId == null) {
+                    call.respond(HttpStatusCode.NotFound, "Note $noteId not found for user $username")
+                    return@put
                 }
+                val wasUpdated = NoteRepository.updateNote(noteId, userId, noteRequest.title, noteRequest.content)
                 if (wasUpdated) {
                     call.respond(HttpStatusCode.OK, "Note $noteId updated successfully for user $username")
                 } else {
@@ -100,11 +81,12 @@ fun Route.noteRouting() {
                     call.respond(HttpStatusCode.Unauthorized, "Invalid token: username claim missing")
                     return@delete
                 }
-                val wasDeleted = transaction {
-                    val usrId = Users.select { Users.username eq username }.singleOrNull()?.get(Users.id)
-                    if (usrId == null) return@transaction false
-                    Notes.deleteWhere { (Notes.id eq noteId) and (Notes.userId eq usrId) } > 0
+                val userId = UserRepository.findIdByUsername(username)
+                if (userId == null) {
+                    call.respond(HttpStatusCode.NotFound, "Note $noteId not found for user $username")
+                    return@delete
                 }
+                val wasDeleted = NoteRepository.deleteNote(noteId, userId)
                 if (wasDeleted) {
                     call.respond(HttpStatusCode.OK, "Note $noteId deleted successfully for user $username")
                 } else {

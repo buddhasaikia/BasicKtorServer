@@ -4,13 +4,12 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.bs.basicktorserver.config.Config
 import com.bs.basicktorserver.data.models.Users
+import com.bs.basicktorserver.data.repository.UserRepository
 import com.bs.basicktorserver.model.UserCredentials
 import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.mindrot.jbcrypt.BCrypt
 import java.util.*
 
@@ -37,13 +36,7 @@ fun Route.authRouting() {
 }
 
 private fun isValidUser(username: String, password: String): Boolean {
-    val userRecord = transaction {
-        Users.select { Users.username eq username }.singleOrNull()
-    }
-    if (userRecord == null) {
-        return false
-    }
+    val userRecord = UserRepository.findByUsername(username) ?: return false
     val storedHash = userRecord[Users.password]
-    val isPasswordMatched = BCrypt.checkpw(password, storedHash)
-    return isPasswordMatched
+    return BCrypt.checkpw(password, storedHash)
 }
