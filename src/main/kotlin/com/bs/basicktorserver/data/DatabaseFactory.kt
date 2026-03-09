@@ -20,8 +20,8 @@ object DatabaseFactory {
             SchemaUtils.create(Users, Notes)
             val hashPassword = BCrypt.hashpw("password123", BCrypt.gensalt())
             Users.insert {
-                it[username] = "buddha"
-                it[email] = "bsaikia.dev@gmailcom"
+                it[username] = "testuser"
+                it[email] = "email@domain.com"
                 it[password] = hashPassword
             }
         }

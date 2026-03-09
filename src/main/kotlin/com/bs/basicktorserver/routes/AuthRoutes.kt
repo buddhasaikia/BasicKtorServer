@@ -36,7 +36,7 @@ fun Route.authRouting() {
     }
 }
 
-fun isValidUser(username: String, password: String): Boolean {
+private fun isValidUser(username: String, password: String): Boolean {
     val userRecord = transaction {
         Users.select { Users.username eq username }.singleOrNull()
     }
