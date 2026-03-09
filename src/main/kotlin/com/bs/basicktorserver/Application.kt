@@ -11,7 +11,7 @@ import com.bs.basicktorserver.routes.noteRouting
 import com.bs.basicktorserver.routes.pagesRouting
 import com.bs.basicktorserver.routes.userRouting
 import io.ktor.http.*
-import io.ktor.serialization.gson.*
+import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
@@ -42,7 +42,7 @@ fun Application.module() {
             challenge { defaultScheme, realm ->
                 call.respond(
                     HttpStatusCode.Unauthorized,
-                    mapOf("error" to "Token is not valid or has expired")
+                    ErrorResponse("Token is not valid or has expired")
                 )
             }
         }
@@ -50,7 +50,7 @@ fun Application.module() {
 
     // Install your server plugins here
     install(ContentNegotiation) {
-        gson()
+        json()
     }
 
     // Global error handling

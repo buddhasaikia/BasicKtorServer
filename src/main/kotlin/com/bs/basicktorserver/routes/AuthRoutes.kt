@@ -5,6 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.bs.basicktorserver.config.Config
 import com.bs.basicktorserver.data.models.Users
 import com.bs.basicktorserver.data.repository.UserRepository
+import com.bs.basicktorserver.model.TokenResponse
 import com.bs.basicktorserver.model.UserCredentials
 import io.ktor.http.*
 import io.ktor.server.request.*
@@ -31,7 +32,7 @@ fun Route.authRouting() {
             .withExpiresAt(Date(System.currentTimeMillis() + 600000))
             .sign(Algorithm.HMAC256(Config.JWT_SECRET)) // Sign it securely
 
-        call.respond<HashMap<String, String>>(hashMapOf("token" to token))
+        call.respond(TokenResponse(token = token))
     }
 }
 

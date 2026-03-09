@@ -1,6 +1,7 @@
 package com.bs.basicktorserver.data.repository
 
 import com.bs.basicktorserver.data.models.Users
+import com.bs.basicktorserver.model.UserResponse
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -40,13 +41,13 @@ object UserRepository {
         }
     }
 
-    fun getAllUsers(): List<Map<String, Any?>> {
+    fun getAllUsers(): List<UserResponse> {
         return transaction {
             Users.selectAll().map { row ->
-                mapOf(
-                    "id" to row[Users.id],
-                    "username" to row[Users.username],
-                    "email" to row[Users.email]
+                UserResponse(
+                    id = row[Users.id],
+                    username = row[Users.username],
+                    email = row[Users.email]
                 )
             }
         }

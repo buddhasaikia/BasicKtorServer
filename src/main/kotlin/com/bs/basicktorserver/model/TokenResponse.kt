@@ -3,4 +3,4 @@ package com.bs.basicktorserver.model
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class UserCredentials(val username: String, val password: String)
+data class TokenResponse(val token: String)
