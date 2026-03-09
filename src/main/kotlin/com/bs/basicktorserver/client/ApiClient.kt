@@ -1,5 +1,6 @@
 package com.bs.basicktorserver.client
 
+import com.bs.basicktorserver.model.TokenResponse
 import com.bs.basicktorserver.model.UserCredentials
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -7,7 +8,7 @@ import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import io.ktor.serialization.gson.*
+import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.runBlocking
 
 fun main(args: Array<String>) = runBlocking {
@@ -19,7 +20,7 @@ class ApiClient {
     suspend fun main() {
         val client = HttpClient(CIO) {
             install(ContentNegotiation) {
-                gson()
+                json()
             }
         }
 
@@ -32,16 +33,14 @@ class ApiClient {
                 )
             )
         }
-        val responseMap = loginResponse.body<Map<String, String>>()
-        val myToken = responseMap["token"]
+        val tokenResponse = loginResponse.body<TokenResponse>()
+        val myToken = tokenResponse.token
         println("Successfully logged in! Received token: $myToken")
 
-        if (myToken != null) {
-            val userResponse = client.get("http://localhost:8080/users") {
-                header("Authorization", "Bearer $myToken")
-            }
-            val userListJson: String = userResponse.body()
-            println("Received user list: $userListJson")
+        val userResponse = client.get("http://localhost:8080/users") {
+            header("Authorization", "Bearer $myToken")
         }
+        val userListJson: String = userResponse.body()
+        println("Received user list: $userListJson")
     }
 }
