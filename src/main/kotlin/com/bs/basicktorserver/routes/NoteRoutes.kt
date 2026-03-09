@@ -15,20 +15,19 @@ fun Route.noteRouting() {
     authenticate(Config.JWT_NAME) {
         route("/notes") {
             post {
-                // 2. Extract the username claim from the JWT
                 val username = getUserNameFromToken(call)
                 if (username == null) {
                     call.respond(HttpStatusCode.Unauthorized, "Invalid token: username claim missing")
                     return@post
                 }
                 val noteRequest = call.receive<NoteRequest>()
-                val userId = UserRepository.findIdByUsername(username)
-                if (userId == null) {
-                    call.respond(HttpStatusCode.InternalServerError, "Failed to create note for user $username")
-                    return@post
+                // Atomic: user lookup + note insert in a single transaction
+                val wasCreated = NoteRepository.createNoteForUsername(username, noteRequest.title, noteRequest.content)
+                if (wasCreated) {
+                    call.respond(HttpStatusCode.Created, "Note created successfully for user $username")
+                } else {
+                    call.respond(HttpStatusCode.Unauthorized, "User not found for the provided token")
                 }
-                NoteRepository.createNote(userId, noteRequest.title, noteRequest.content)
-                call.respond(HttpStatusCode.Created, "Note created successfully for user $username")
             }
             get {
                 val username = getUserNameFromToken(call)
@@ -38,7 +37,7 @@ fun Route.noteRouting() {
                 }
                 val userId = UserRepository.findIdByUsername(username)
                 if (userId == null) {
-                    call.respond(HttpStatusCode.Unauthorized, "User not found")
+                    call.respond(HttpStatusCode.Unauthorized, "User not found for the provided token")
                     return@get
                 }
                 val userNotes = NoteRepository.getNotesForUser(userId)
@@ -59,7 +58,7 @@ fun Route.noteRouting() {
                 val noteRequest = call.receive<NoteRequest>()
                 val userId = UserRepository.findIdByUsername(username)
                 if (userId == null) {
-                    call.respond(HttpStatusCode.NotFound, "Note $noteId not found for user $username")
+                    call.respond(HttpStatusCode.Unauthorized, "User not found for the provided token")
                     return@put
                 }
                 val wasUpdated = NoteRepository.updateNote(noteId, userId, noteRequest.title, noteRequest.content)
@@ -83,7 +82,7 @@ fun Route.noteRouting() {
                 }
                 val userId = UserRepository.findIdByUsername(username)
                 if (userId == null) {
-                    call.respond(HttpStatusCode.NotFound, "Note $noteId not found for user $username")
+                    call.respond(HttpStatusCode.Unauthorized, "User not found for the provided token")
                     return@delete
                 }
                 val wasDeleted = NoteRepository.deleteNote(noteId, userId)
