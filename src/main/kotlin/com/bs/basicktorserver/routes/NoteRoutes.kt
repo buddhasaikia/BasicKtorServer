@@ -29,11 +29,13 @@ fun Route.noteRouting() {
             }
 
             get {
-                val (username, userId) = getAuthenticatedUser(call) ?: run {
-                    call.respond(HttpStatusCode.Unauthorized, "User not found for the provided token")
+                val result = getAuthenticatedUser(call)
+                if (result !is AuthResult.Success) {
+                    call.respond(HttpStatusCode.Unauthorized, (result as? AuthResult.MissingClaim)?.message
+                        ?: (result as AuthResult.UserNotFound).message)
                     return@get
                 }
-                val userNotes = NoteRepository.getNotesForUser(userId)
+                val userNotes = NoteRepository.getNotesForUser(result.user.userId)
                 call.respond(userNotes)
             }
 
@@ -43,16 +45,19 @@ fun Route.noteRouting() {
                     call.respond(HttpStatusCode.BadRequest, "Invalid note ID")
                     return@put
                 }
-                val (username, userId) = getAuthenticatedUser(call) ?: run {
-                    call.respond(HttpStatusCode.Unauthorized, "User not found for the provided token")
+                val result = getAuthenticatedUser(call)
+                if (result !is AuthResult.Success) {
+                    call.respond(HttpStatusCode.Unauthorized, (result as? AuthResult.MissingClaim)?.message
+                        ?: (result as AuthResult.UserNotFound).message)
                     return@put
                 }
+                val user = result.user
                 val noteRequest = call.receive<NoteRequest>()
-                val wasUpdated = NoteRepository.updateNote(noteId, userId, noteRequest.title, noteRequest.content)
+                val wasUpdated = NoteRepository.updateNote(noteId, user.userId, noteRequest.title, noteRequest.content)
                 if (wasUpdated) {
-                    call.respond(HttpStatusCode.OK, "Note $noteId updated successfully for user $username")
+                    call.respond(HttpStatusCode.OK, "Note $noteId updated successfully for user ${user.username}")
                 } else {
-                    call.respond(HttpStatusCode.NotFound, "Note $noteId not found for user $username")
+                    call.respond(HttpStatusCode.NotFound, "Note $noteId not found for user ${user.username}")
                 }
             }
 
@@ -62,15 +67,18 @@ fun Route.noteRouting() {
                     call.respond(HttpStatusCode.BadRequest, "Invalid note ID")
                     return@delete
                 }
-                val (username, userId) = getAuthenticatedUser(call) ?: run {
-                    call.respond(HttpStatusCode.Unauthorized, "User not found for the provided token")
+                val result = getAuthenticatedUser(call)
+                if (result !is AuthResult.Success) {
+                    call.respond(HttpStatusCode.Unauthorized, (result as? AuthResult.MissingClaim)?.message
+                        ?: (result as AuthResult.UserNotFound).message)
                     return@delete
                 }
-                val wasDeleted = NoteRepository.deleteNote(noteId, userId)
+                val user = result.user
+                val wasDeleted = NoteRepository.deleteNote(noteId, user.userId)
                 if (wasDeleted) {
-                    call.respond(HttpStatusCode.OK, "Note $noteId deleted successfully for user $username")
+                    call.respond(HttpStatusCode.OK, "Note $noteId deleted successfully for user ${user.username}")
                 } else {
-                    call.respond(HttpStatusCode.NotFound, "Note $noteId not found for user $username")
+                    call.respond(HttpStatusCode.NotFound, "Note $noteId not found for user ${user.username}")
                 }
             }
         }
