@@ -2,6 +2,7 @@ package com.bs.basicktorserver.routes
 
 import com.bs.basicktorserver.config.Config
 import com.bs.basicktorserver.data.models.Users
+import com.bs.basicktorserver.exceptions.isUniqueConstraintViolation
 import com.bs.basicktorserver.model.RegisterRequest
 import com.bs.basicktorserver.model.RegistrationForm
 import io.ktor.http.*
@@ -9,8 +10,9 @@ import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.mindrot.jbcrypt.BCrypt
 
@@ -29,14 +31,22 @@ fun Route.userRouting() {
 
             val hashPassword = BCrypt.hashpw(registerRequest.password, BCrypt.gensalt())
 
-            transaction {
-                Users.insert {
-                    it[username] = registerRequest.username
-                    it[email] = registerRequest.email
-                    it[password] = hashPassword
+            try {
+                transaction {
+                    Users.insert {
+                        it[username] = registerRequest.username
+                        it[email] = registerRequest.email
+                        it[password] = hashPassword
+                    }
+                }
+                call.respond(HttpStatusCode.Created, "Registration successful for ${registerRequest.username}")
+            } catch (ex: ExposedSQLException) {
+                if (ex.isUniqueConstraintViolation()) {
+                    call.respond(HttpStatusCode.Conflict, "Username already exists")
+                } else {
+                    throw ex
                 }
             }
-            call.respond(HttpStatusCode.Created, "Registration successful for ${registerRequest.username}")
         }
 
         authenticate(Config.JWT_NAME) {
