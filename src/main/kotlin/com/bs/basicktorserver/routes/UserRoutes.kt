@@ -1,7 +1,7 @@
 package com.bs.basicktorserver.routes
 
 import com.bs.basicktorserver.config.Config
-import com.bs.basicktorserver.data.models.Users
+import com.bs.basicktorserver.data.repository.UserRepository
 import com.bs.basicktorserver.exceptions.isUniqueConstraintViolation
 import com.bs.basicktorserver.model.RegisterRequest
 import com.bs.basicktorserver.model.RegistrationForm
@@ -11,9 +11,6 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.jetbrains.exposed.exceptions.ExposedSQLException
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.mindrot.jbcrypt.BCrypt
 
 fun Route.userRouting() {
@@ -21,10 +18,7 @@ fun Route.userRouting() {
         post("/register") {
             val registerRequest = call.receive<RegisterRequest>()
             println("Received registration for username=${registerRequest.username}, email=${registerRequest.email}")
-            val isUsernameTaken = transaction {
-                Users.select { Users.username eq registerRequest.username }.singleOrNull() != null
-            }
-            if (isUsernameTaken) {
+            if (UserRepository.isUsernameTaken(registerRequest.username)) {
                 call.respond(HttpStatusCode.Conflict, "Username already exists")
                 return@post
             }
@@ -32,13 +26,7 @@ fun Route.userRouting() {
             val hashPassword = BCrypt.hashpw(registerRequest.password, BCrypt.gensalt())
 
             try {
-                transaction {
-                    Users.insert {
-                        it[username] = registerRequest.username
-                        it[email] = registerRequest.email
-                        it[password] = hashPassword
-                    }
-                }
+                UserRepository.createUser(registerRequest.username, registerRequest.email, hashPassword)
                 call.respond(HttpStatusCode.Created, "Registration successful for ${registerRequest.username}")
             } catch (ex: ExposedSQLException) {
                 if (ex.isUniqueConstraintViolation()) {
@@ -51,15 +39,7 @@ fun Route.userRouting() {
 
         authenticate(Config.JWT_NAME) {
             get {
-                val allUsers = transaction {
-                    Users.selectAll().map { row ->
-                        mapOf(
-                            "id" to row[Users.id],
-                            "username" to row[Users.username],
-                            "email" to row[Users.email]
-                        )
-                    }
-                }
+                val allUsers = UserRepository.getAllUsers()
                 call.respond(allUsers)
             }
         }
@@ -74,21 +54,12 @@ fun Route.userRouting() {
             val updatedInfo = call.receive<RegistrationForm>()
 
             // Check if the new username is already taken by another user
-            val isUsernameTaken = transaction {
-                Users.select { (Users.username eq updatedInfo.username) and (Users.id neq userId) }
-                    .singleOrNull() != null
-            }
-            if (isUsernameTaken) {
+            if (UserRepository.isUsernameTaken(updatedInfo.username, excludeUserId = userId)) {
                 call.respond(HttpStatusCode.Conflict, "Username '${updatedInfo.username}' is already taken")
                 return@put
             }
 
-            val wasUpdated = transaction {
-                Users.update({ Users.id eq userId }) {
-                    it[username] = updatedInfo.username
-                    it[email] = updatedInfo.email
-                } > 0
-            }
+            val wasUpdated = UserRepository.updateUser(userId, updatedInfo.username, updatedInfo.email)
 
             if (wasUpdated) {
                 call.respond(HttpStatusCode.OK, "User $userId updated successfully!")
@@ -105,9 +76,7 @@ fun Route.userRouting() {
                     return@delete
                 }
 
-                val wasDeleted = transaction {
-                    Users.deleteWhere { Users.id eq userId } > 0
-                }
+                val wasDeleted = UserRepository.deleteUser(userId)
 
                 if (wasDeleted) {
                     call.respond(HttpStatusCode.OK, "User $userId deleted successfully!")
