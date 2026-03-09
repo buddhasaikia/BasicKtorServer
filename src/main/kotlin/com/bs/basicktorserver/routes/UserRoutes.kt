@@ -18,7 +18,7 @@ fun Route.userRouting() {
     route("/users") {
         post("/register") {
             val registerRequest = call.receive<RegisterRequest>()
-            println("Received registration form: $registerRequest")
+            println("Received registration for username=${registerRequest.username}, email=${registerRequest.email}")
             val isUsernameTaken = transaction {
                 Users.select { Users.username eq registerRequest.username }.singleOrNull() != null
             }
