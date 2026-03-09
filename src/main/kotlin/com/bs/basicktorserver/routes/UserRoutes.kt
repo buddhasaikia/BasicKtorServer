@@ -87,10 +87,24 @@ fun Route.userRouting() {
             }
         }
 
-        delete("/{id}") {
-            val userId = call.parameters["id"]
-            //Delete operation would happen here using userId
-            call.respond(HttpStatusCode.OK, "User $userId deleted successfully!")
+        authenticate(Config.JWT_NAME) {
+            delete("/{id}") {
+                val userId = call.parameters["id"]?.toIntOrNull()
+                if (userId == null) {
+                    call.respond(HttpStatusCode.BadRequest, "Invalid user ID")
+                    return@delete
+                }
+
+                val wasDeleted = transaction {
+                    Users.deleteWhere { Users.id eq userId } > 0
+                }
+
+                if (wasDeleted) {
+                    call.respond(HttpStatusCode.OK, "User $userId deleted successfully!")
+                } else {
+                    call.respond(HttpStatusCode.NotFound, "User $userId not found")
+                }
+            }
         }
     }
 }
