@@ -22,7 +22,7 @@ import io.ktor.server.routing.*
 
 fun Application.module() {
     // Initialize your database connection here
-    DatabaseFactory.init()
+    DatabaseFactory.init(environment.config)
 
     install(Authentication) {
         jwt(Config.JWT_NAME) {
