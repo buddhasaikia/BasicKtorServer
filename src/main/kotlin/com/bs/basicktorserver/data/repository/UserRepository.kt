@@ -58,6 +58,7 @@ object UserRepository {
             Users.update({ Users.id eq id }) {
                 it[Users.username] = username
                 it[Users.email] = email
+                it[Users.updatedAt] = java.time.LocalDateTime.now()
             } > 0
         }
     }

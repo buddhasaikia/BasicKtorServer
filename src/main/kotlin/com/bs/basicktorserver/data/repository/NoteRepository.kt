@@ -55,6 +55,7 @@ object NoteRepository {
             Notes.update({ (Notes.id eq noteId) and (Notes.userId eq userId) }) {
                 it[Notes.title] = title
                 it[Notes.content] = content
+                it[Notes.updatedAt] = java.time.LocalDateTime.now()
             } > 0
         }
     }
