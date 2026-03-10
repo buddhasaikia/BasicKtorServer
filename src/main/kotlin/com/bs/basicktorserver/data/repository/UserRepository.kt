@@ -41,15 +41,17 @@ object UserRepository {
         }
     }
 
-    fun getAllUsers(): List<UserResponse> {
+    fun getAllUsers(limit: Int = 10, offset: Long = 0): List<UserResponse> {
         return transaction {
-            Users.selectAll().map { row ->
-                UserResponse(
-                    id = row[Users.id],
-                    username = row[Users.username],
-                    email = row[Users.email]
-                )
-            }
+            Users.selectAll()
+                .limit(limit, offset)
+                .map { row ->
+                    UserResponse(
+                        id = row[Users.id],
+                        username = row[Users.username],
+                        email = row[Users.email]
+                    )
+                }
         }
     }
 

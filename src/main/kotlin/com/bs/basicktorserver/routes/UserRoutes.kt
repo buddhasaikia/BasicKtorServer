@@ -19,7 +19,7 @@ fun Route.userRouting() {
             val registerRequest = call.receive<RegisterRequest>()
             println("Received registration for username=${registerRequest.username}, email=${registerRequest.email}")
             if (UserRepository.isUsernameTaken(registerRequest.username)) {
-                call.respond(HttpStatusCode.Conflict, "Username already exists")
+                call.respond(HttpStatusCode.Conflict, com.bs.basicktorserver.model.ErrorResponse("Username already exists"))
                 return@post
             }
 
@@ -30,7 +30,7 @@ fun Route.userRouting() {
                 call.respond(HttpStatusCode.Created, "Registration successful for ${registerRequest.username}")
             } catch (ex: ExposedSQLException) {
                 if (ex.isUniqueConstraintViolation()) {
-                    call.respond(HttpStatusCode.Conflict, "Username already exists")
+                    call.respond(HttpStatusCode.Conflict, com.bs.basicktorserver.model.ErrorResponse("Username already exists"))
                 } else {
                     throw ex
                 }
@@ -39,7 +39,9 @@ fun Route.userRouting() {
 
         authenticate(Config.JWT_NAME) {
             get {
-                val allUsers = UserRepository.getAllUsers()
+                val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 10
+                val offset = call.request.queryParameters["offset"]?.toLongOrNull() ?: 0L
+                val allUsers = UserRepository.getAllUsers(limit, offset)
                 call.respond(allUsers)
             }
         }
@@ -47,7 +49,7 @@ fun Route.userRouting() {
         put("/{id}") {
             val userId = call.parameters["id"]?.toIntOrNull()
             if (userId == null) {
-                call.respond(HttpStatusCode.BadRequest, "Invalid user ID")
+                call.respond(HttpStatusCode.BadRequest, com.bs.basicktorserver.model.ErrorResponse("Invalid user ID"))
                 return@put
             }
 
@@ -55,7 +57,7 @@ fun Route.userRouting() {
 
             // Check if the new username is already taken by another user
             if (UserRepository.isUsernameTaken(updatedInfo.username, excludeUserId = userId)) {
-                call.respond(HttpStatusCode.Conflict, "Username '${updatedInfo.username}' is already taken")
+                call.respond(HttpStatusCode.Conflict, com.bs.basicktorserver.model.ErrorResponse("Username '${updatedInfo.username}' is already taken"))
                 return@put
             }
 
@@ -64,7 +66,7 @@ fun Route.userRouting() {
             if (wasUpdated) {
                 call.respond(HttpStatusCode.OK, "User $userId updated successfully!")
             } else {
-                call.respond(HttpStatusCode.NotFound, "User $userId not found")
+                call.respond(HttpStatusCode.NotFound, com.bs.basicktorserver.model.ErrorResponse("User $userId not found"))
             }
         }
 
@@ -72,7 +74,7 @@ fun Route.userRouting() {
             delete("/{id}") {
                 val userId = call.parameters["id"]?.toIntOrNull()
                 if (userId == null) {
-                    call.respond(HttpStatusCode.BadRequest, "Invalid user ID")
+                    call.respond(HttpStatusCode.BadRequest, com.bs.basicktorserver.model.ErrorResponse("Invalid user ID"))
                     return@delete
                 }
 
@@ -81,7 +83,7 @@ fun Route.userRouting() {
                 if (wasDeleted) {
                     call.respond(HttpStatusCode.OK, "User $userId deleted successfully!")
                 } else {
-                    call.respond(HttpStatusCode.NotFound, "User $userId not found")
+                    call.respond(HttpStatusCode.NotFound, com.bs.basicktorserver.model.ErrorResponse("User $userId not found"))
                 }
             }
         }

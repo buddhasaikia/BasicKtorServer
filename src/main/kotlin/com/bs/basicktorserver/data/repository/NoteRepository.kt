@@ -38,15 +38,17 @@ object NoteRepository {
         }
     }
 
-    fun getNotesForUser(userId: Int): List<NoteResponse> {
+    fun getNotesForUser(userId: Int, limit: Int = 10, offset: Long = 0): List<NoteResponse> {
         return transaction {
-            Notes.select { Notes.userId eq userId }.map { row ->
-                NoteResponse(
-                    id = row[Notes.id],
-                    title = row[Notes.title],
-                    content = row[Notes.content]
-                )
-            }
+            Notes.select { Notes.userId eq userId }
+                .limit(limit, offset)
+                .map { row ->
+                    NoteResponse(
+                        id = row[Notes.id],
+                        title = row[Notes.title],
+                        content = row[Notes.content]
+                    )
+                }
         }
     }
 

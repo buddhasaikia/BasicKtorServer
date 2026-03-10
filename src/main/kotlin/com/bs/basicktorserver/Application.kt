@@ -56,14 +56,16 @@ fun Application.module() {
     // Global error handling
     install(StatusPages) {
         exception<UserNotFoundException> { call, cause ->
-            val errorResponse = ErrorResponse(cause.message ?: "User not found")
-            call.respond(errorResponse)
+            call.respond(
+                status = HttpStatusCode.NotFound,
+                message = ErrorResponse(cause.message ?: "User not found")
+            )
         }
         exception<Throwable> { call, cause ->
             cause.printStackTrace()
             call.respond(
                 status = HttpStatusCode.InternalServerError,
-                message = ErrorResponse("An unexpected error occurred: ${cause.message}").toString()
+                message = ErrorResponse("An unexpected error occurred: ${cause.message}")
             )
         }
     }
@@ -71,8 +73,10 @@ fun Application.module() {
     // Register your modularized routes here
     routing {
         pagesRouting()
-        authRouting()
-        userRouting()
-        noteRouting()
+        route("/v1") {
+            authRouting()
+            userRouting()
+            noteRouting()
+        }
     }
 }

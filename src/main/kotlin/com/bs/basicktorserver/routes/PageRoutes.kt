@@ -24,15 +24,20 @@ fun Route.pagesRouting() {
             if (result !is AuthResult.Success) {
                 call.respond(
                     HttpStatusCode.Unauthorized,
-                    (result as? AuthResult.MissingClaim)?.message
-                        ?: (result as AuthResult.UserNotFound).message
+                    com.bs.basicktorserver.model.ErrorResponse(
+                        (result as? AuthResult.MissingClaim)?.message
+                            ?: (result as AuthResult.UserNotFound).message
+                    )
                 )
                 return@get
             }
 
             val userRow = UserRepository.findByUsername(result.user.username)
             if (userRow == null) {
-                call.respond(HttpStatusCode.NotFound, "User not found")
+                call.respond(
+                    HttpStatusCode.NotFound,
+                    com.bs.basicktorserver.model.ErrorResponse("User not found")
+                )
                 return@get
             }
 
