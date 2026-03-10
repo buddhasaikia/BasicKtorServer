@@ -28,10 +28,10 @@ object DatabaseFactory {
 
         // Seed data if needed
         transaction {
-            val hashPassword = BCrypt.hashpw("password123", BCrypt.gensalt())
             // Check if test user exists to avoid duplicate seed
             val userExists = !Users.select { Users.username eq "testuser" }.empty()
             if (!userExists) {
+                val hashPassword = BCrypt.hashpw("password123", BCrypt.gensalt())
                 Users.insert {
                     it[Users.username] = "testuser"
                     it[Users.email] = "email@domain.com"
