@@ -16,7 +16,7 @@ fun Route.noteRouting() {
                 // POST uses createNoteForUsername() for atomicity, so only needs the username
                 val username = getUserNameFromToken(call)
                 if (username == null) {
-                    call.respond(HttpStatusCode.Unauthorized, "Invalid token: username claim missing")
+                    call.respond(HttpStatusCode.Unauthorized, com.bs.basicktorserver.model.ErrorResponse("Invalid token: username claim missing"))
                     return@post
                 }
                 val noteRequest = call.receive<NoteRequest>()
@@ -24,31 +24,43 @@ fun Route.noteRouting() {
                 if (wasCreated) {
                     call.respond(HttpStatusCode.Created, "Note created successfully for user $username")
                 } else {
-                    call.respond(HttpStatusCode.Unauthorized, "User not found for the provided token")
+                    call.respond(HttpStatusCode.Unauthorized, com.bs.basicktorserver.model.ErrorResponse("User not found for the provided token"))
                 }
             }
 
             get {
                 val result = getAuthenticatedUser(call)
                 if (result !is AuthResult.Success) {
-                    call.respond(HttpStatusCode.Unauthorized, (result as? AuthResult.MissingClaim)?.message
-                        ?: (result as AuthResult.UserNotFound).message)
+                    call.respond(
+                        HttpStatusCode.Unauthorized,
+                        com.bs.basicktorserver.model.ErrorResponse(
+                            (result as? AuthResult.MissingClaim)?.message
+                                ?: (result as AuthResult.UserNotFound).message
+                        )
+                    )
                     return@get
                 }
-                val userNotes = NoteRepository.getNotesForUser(result.user.userId)
+                val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 10
+                val offset = call.request.queryParameters["offset"]?.toLongOrNull() ?: 0L
+                val userNotes = NoteRepository.getNotesForUser(result.user.userId, limit, offset)
                 call.respond(userNotes)
             }
 
             put("/{id}") {
                 val noteId = call.parameters["id"]?.toIntOrNull()
                 if (noteId == null) {
-                    call.respond(HttpStatusCode.BadRequest, "Invalid note ID")
+                    call.respond(HttpStatusCode.BadRequest, com.bs.basicktorserver.model.ErrorResponse("Invalid note ID"))
                     return@put
                 }
                 val result = getAuthenticatedUser(call)
                 if (result !is AuthResult.Success) {
-                    call.respond(HttpStatusCode.Unauthorized, (result as? AuthResult.MissingClaim)?.message
-                        ?: (result as AuthResult.UserNotFound).message)
+                    call.respond(
+                        HttpStatusCode.Unauthorized,
+                        com.bs.basicktorserver.model.ErrorResponse(
+                            (result as? AuthResult.MissingClaim)?.message
+                                ?: (result as AuthResult.UserNotFound).message
+                        )
+                    )
                     return@put
                 }
                 val user = result.user
@@ -57,20 +69,25 @@ fun Route.noteRouting() {
                 if (wasUpdated) {
                     call.respond(HttpStatusCode.OK, "Note $noteId updated successfully for user ${user.username}")
                 } else {
-                    call.respond(HttpStatusCode.NotFound, "Note $noteId not found for user ${user.username}")
+                    call.respond(HttpStatusCode.NotFound, com.bs.basicktorserver.model.ErrorResponse("Note $noteId not found for user ${user.username}"))
                 }
             }
 
             delete("/{id}") {
                 val noteId = call.parameters["id"]?.toIntOrNull()
                 if (noteId == null) {
-                    call.respond(HttpStatusCode.BadRequest, "Invalid note ID")
+                    call.respond(HttpStatusCode.BadRequest, com.bs.basicktorserver.model.ErrorResponse("Invalid note ID"))
                     return@delete
                 }
                 val result = getAuthenticatedUser(call)
                 if (result !is AuthResult.Success) {
-                    call.respond(HttpStatusCode.Unauthorized, (result as? AuthResult.MissingClaim)?.message
-                        ?: (result as AuthResult.UserNotFound).message)
+                    call.respond(
+                        HttpStatusCode.Unauthorized,
+                        com.bs.basicktorserver.model.ErrorResponse(
+                            (result as? AuthResult.MissingClaim)?.message
+                                ?: (result as AuthResult.UserNotFound).message
+                        )
+                    )
                     return@delete
                 }
                 val user = result.user
@@ -78,7 +95,7 @@ fun Route.noteRouting() {
                 if (wasDeleted) {
                     call.respond(HttpStatusCode.OK, "Note $noteId deleted successfully for user ${user.username}")
                 } else {
-                    call.respond(HttpStatusCode.NotFound, "Note $noteId not found for user ${user.username}")
+                    call.respond(HttpStatusCode.NotFound, com.bs.basicktorserver.model.ErrorResponse("Note $noteId not found for user ${user.username}"))
                 }
             }
         }

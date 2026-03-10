@@ -20,7 +20,10 @@ fun Route.authRouting() {
         val credentials = call.receive<UserCredentials>()
         val isValidUser = isValidUser(credentials.username, credentials.password)
         if (!isValidUser) {
-            call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
+            call.respond(
+                HttpStatusCode.Unauthorized,
+                com.bs.basicktorserver.model.ErrorResponse("Invalid credentials")
+            )
             return@post
         }
         // Generate the JWT
