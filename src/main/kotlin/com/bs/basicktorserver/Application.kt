@@ -15,17 +15,31 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
+import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.plugins.ratelimit.*
 import io.ktor.server.plugins.statuspages.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlin.time.Duration.Companion.minutes
+import org.slf4j.event.Level
 
 fun Application.module() {
+    // Initialize configuration from application.yaml and environment variables
+    Config.init(environment.config)
+    
     // Initialize your database connection here
     DatabaseFactory.init(environment.config)
+
+    // Configure request logging based on environment
+    install(CallLogging) {
+        level = if (Config.ENVIRONMENT == "production") Level.INFO else Level.DEBUG
+        filter { call ->
+            !call.request.path().startsWith("/health")
+        }
+    }
 
     install(Authentication) {
         jwt(Config.JWT_NAME) {

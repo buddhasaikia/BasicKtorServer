@@ -1,0 +1,34 @@
+# Staging Environment Configuration
+# Loaded when ENVIRONMENT=staging
+
+ktor:
+  deployment:
+    port: 8080
+  cors:
+    allowHosts: "https://staging.example.com,https://staging-api.example.com"
+
+# JWT Configuration (staging - requires JWT_SECRET)
+jwt:
+  audience: "my-api-audience"
+  issuer: "my-api-issuer"
+  # MUST set JWT_SECRET environment variable in staging
+
+# Database Configuration (staging - external database)
+database:
+  driver: "org.h2.Driver"
+  url: "jdbc:h2:./db/staging;DB_CLOSE_DELAY=-1;MODE=MySQL"
+  user: "root"
+  password: ""
+  maxPoolSize: 10
+  minimumIdle: 3
+
+environment: "staging"
+seedData: false
+
+# Logging - moderate level for monitoring
+logging:
+  level: "INFO"
+
+app:
+  name: "BasicKtorServer"
+  version: "1.0.0"

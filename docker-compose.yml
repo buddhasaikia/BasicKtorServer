@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  ktor-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: basicktor-dev
+    ports:
+      - "8080:8080"
+    environment:
+      ENVIRONMENT: development
+      JWT_SECRET: dev-secret-key-${RANDOM:-12345}
+      SEED_DATA: "true"
+      DATABASE_URL: "jdbc:h2:./db/data;DB_CLOSE_DELAY=-1;MODE=MySQL"
+      DATABASE_USER: "root"
+      DATABASE_PASSWORD: ""
+    volumes:
+      - ./db:/app/db
+      - ./src:/app/src
+    depends_on:
+      - h2-console
+    networks:
+      - ktor-network
+    restart: on-failure
+
+  h2-console:
+    image: oscarfonts/h2:latest
+    container_name: basicktor-h2
+    ports:
+      - "8081:8082"
+    environment:
+      H2_OPTIONS: "-tcp -tcpAllowOthers -tcpPort 9092 -trace"
+    volumes:
+      - ./db:/h2-data
+    networks:
+      - ktor-network
+    restart: on-failure
+
+networks:
+  ktor-network:
+    driver: bridge
+
+volumes:
+  db:

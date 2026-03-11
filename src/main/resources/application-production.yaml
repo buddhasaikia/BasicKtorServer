@@ -1,0 +1,41 @@
+# Production Environment Configuration
+# Loaded when ENVIRONMENT=production
+#
+# IMPORTANT: In production, all sensitive values MUST be set via environment variables:
+# - JWT_SECRET (required)
+# - DATABASE_URL
+# - DATABASE_USER
+# - DATABASE_PASSWORD
+# - Any other sensitive settings
+
+ktor:
+  deployment:
+    port: 8080
+  cors:
+    allowHosts: "https://app.example.com,https://api.example.com"
+
+# JWT Configuration (production - requires JWT_SECRET)
+jwt:
+  audience: "my-api-audience"
+  issuer: "my-api-issuer"
+  # MUST set JWT_SECRET environment variable in production
+
+# Database Configuration (production - external database)
+database:
+  driver: "com.mysql.cj.jdbc.Driver"
+  url: "jdbc:mysql://prod-db-host:3306/ktor_app"
+  user: "prod_user"
+  password: ""
+  maxPoolSize: 20
+  minimumIdle: 5
+
+environment: "production"
+seedData: false
+
+# Logging - minimal for performance
+logging:
+  level: "WARN"
+
+app:
+  name: "BasicKtorServer"
+  version: "1.0.0"
