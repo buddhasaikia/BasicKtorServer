@@ -24,11 +24,11 @@ class ApiClient {
             }
         }
 
-        val loginResponse = client.post("http://localhost:8080/login") {
+        val loginResponse = client.post("http://localhost:8080/v1/login") {
             contentType(ContentType.Application.Json)
             setBody(
                 UserCredentials(
-                    username = "buddha",
+                    username = "testuser",
                     password = "password123"
                 )
             )
@@ -37,7 +37,7 @@ class ApiClient {
         val myToken = tokenResponse.token
         println("Successfully logged in! Received token: $myToken")
 
-        val userResponse = client.get("http://localhost:8080/users") {
+        val userResponse = client.get("http://localhost:8080/v1/users") {
             header("Authorization", "Bearer $myToken")
         }
         val userListJson: String = userResponse.body()
