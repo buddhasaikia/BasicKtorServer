@@ -40,8 +40,31 @@ fun Route.noteRouting() {
                     )
                     return@get
                 }
-                val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 10
-                val offset = call.request.queryParameters["offset"]?.toLongOrNull() ?: 0L
+
+                val limitParam = call.request.queryParameters["limit"]
+                val offsetParam = call.request.queryParameters["offset"]
+
+                val parsedLimit = limitParam?.toIntOrNull()
+                val parsedOffset = offsetParam?.toLongOrNull()
+
+                if (parsedLimit != null && (parsedLimit <= 0 || parsedLimit > 100)) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        com.bs.basicktorserver.model.ErrorResponse("Query parameter 'limit' must be between 1 and 100")
+                    )
+                    return@get
+                }
+
+                if (parsedOffset != null && parsedOffset < 0L) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        com.bs.basicktorserver.model.ErrorResponse("Query parameter 'offset' must be greater than or equal to 0")
+                    )
+                    return@get
+                }
+
+                val limit = parsedLimit ?: 10
+                val offset = parsedOffset ?: 0L
                 val userNotes = NoteRepository.getNotesForUser(result.user.userId, limit, offset)
                 call.respond(userNotes)
             }

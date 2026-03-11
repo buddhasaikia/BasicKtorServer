@@ -44,6 +44,7 @@ object UserRepository {
     fun getAllUsers(limit: Int = 10, offset: Long = 0): List<UserResponse> {
         return transaction {
             Users.selectAll()
+                .orderBy(Users.id to SortOrder.ASC)
                 .limit(limit, offset)
                 .map { row ->
                     UserResponse(
