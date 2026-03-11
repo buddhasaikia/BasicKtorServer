@@ -51,7 +51,14 @@ fun Application.module() {
         }
     }
 
-    // Install CORS
+    // Install CORS with configurable allowed origins
+    val corsAllowedHosts = environment.config.propertyOrNull("ktor.cors.allowHosts")?.getString()
+        ?.split(',')
+        ?.map { it.trim() }
+        ?.filter { it.isNotEmpty() }
+        ?.takeIf { it.isNotEmpty() }
+        ?: listOf("http://localhost:8080", "http://localhost:3000")
+    
     install(CORS) {
         allowMethod(HttpMethod.Get)
         allowMethod(HttpMethod.Post)
@@ -60,7 +67,17 @@ fun Application.module() {
         allowMethod(HttpMethod.Options)
         allowHeader(HttpHeaders.ContentType)
         allowHeader(HttpHeaders.Authorization)
-        anyHost()
+        
+        corsAllowedHosts.forEach { origin ->
+            val parts = origin.split("://", limit = 2)
+            if (parts.size == 2) {
+                val scheme = parts[0]
+                val hostPort = parts[1]
+                allowHost(hostPort, listOf(scheme))
+            } else {
+                allowHost(origin, listOf("http", "https"))
+            }
+        }
     }
 
     // Install rate limiting

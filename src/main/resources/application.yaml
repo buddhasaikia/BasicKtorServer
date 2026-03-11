@@ -1,3 +1,5 @@
+# Application configuration for BasicKtorServer
+
 ktor:
   application:
     modules:
@@ -11,10 +13,20 @@ database:
   user: "root"
   password: ""
 
-# Environment variables for security configuration:
-# JWT_SECRET - Set this to a secure random string in production (defaults to "my-auth-secret-key" if not set)
-# SEED_DATA - Set this to "true" to enable test data seeding on startup (disabled by default)
-# Examples:
-#   export JWT_SECRET="your-secure-random-secret-key"
+# Security configuration via environment variables:
+# JWT_SECRET - REQUIRED in production. Set to a secure random string (e.g., output of: openssl rand -hex 32)
+# ENVIRONMENT - Set to "production" to enforce JWT_SECRET requirement; otherwise uses ephemeral secret for dev/test
+# SEED_DATA - Set to "true" to enable test data seeding on startup (disabled by default)
+# SEED_USER_PASSWORD - Optional seed user password (if not set, a random password is generated and logged once)
+# ktor.cors.allowHosts - Comma-separated list of allowed CORS origins (defaults to http://localhost:8080, http://localhost:3000)
+#
+# Example setup for development:
+#   export JWT_SECRET="dev-secret-key-change-in-production"
 #   export SEED_DATA=true
+#   export SEED_USER_PASSWORD="temporary-test-password"
+#
+# Example setup for production:
+#   export ENVIRONMENT=production
+#   export JWT_SECRET="$(openssl rand -hex 32)"
+#   export ktor.cors.allowHosts="https://app.example.com,https://api.example.com"
 
