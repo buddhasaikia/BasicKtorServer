@@ -10,3 +10,11 @@ database:
   url: "jdbc:h2:./db/data;DB_CLOSE_DELAY=-1;"
   user: "root"
   password: ""
+
+# Environment variables for security configuration:
+# JWT_SECRET - Set this to a secure random string in production (defaults to "my-auth-secret-key" if not set)
+# SEED_DATA - Set this to "true" to enable test data seeding on startup (disabled by default)
+# Examples:
+#   export JWT_SECRET="your-secure-random-secret-key"
+#   export SEED_DATA=true
+

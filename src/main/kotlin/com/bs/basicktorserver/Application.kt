@@ -16,9 +16,12 @@ import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.cors.routing.*
+import io.ktor.server.plugins.ratelimit.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlin.time.Duration.Companion.minutes
 
 fun Application.module() {
     // Initialize your database connection here
@@ -45,6 +48,25 @@ fun Application.module() {
                     ErrorResponse("Token is not valid or has expired")
                 )
             }
+        }
+    }
+
+    // Install CORS
+    install(CORS) {
+        allowMethod(HttpMethod.Get)
+        allowMethod(HttpMethod.Post)
+        allowMethod(HttpMethod.Put)
+        allowMethod(HttpMethod.Delete)
+        allowMethod(HttpMethod.Options)
+        allowHeader(HttpHeaders.ContentType)
+        allowHeader(HttpHeaders.Authorization)
+        anyHost()
+    }
+
+    // Install rate limiting
+    install(RateLimit) {
+        global {
+            rateLimiter(limit = 1000, refillPeriod = 1.minutes)
         }
     }
 

@@ -5,6 +5,8 @@ import com.bs.basicktorserver.data.repository.UserRepository
 import com.bs.basicktorserver.exceptions.isUniqueConstraintViolation
 import com.bs.basicktorserver.model.RegisterRequest
 import com.bs.basicktorserver.model.RegistrationForm
+import com.bs.basicktorserver.model.ErrorResponse
+import com.bs.basicktorserver.validation.InputValidator
 import io.ktor.http.*
 import io.ktor.server.auth.*
 import io.ktor.server.request.*
@@ -18,8 +20,22 @@ fun Route.userRouting() {
         post("/register") {
             val registerRequest = call.receive<RegisterRequest>()
             println("Received registration for username=${registerRequest.username}, email=${registerRequest.email}")
+            
+            val usernameValidation = InputValidator.validateUsername(registerRequest.username)
+            val emailValidation = InputValidator.validateEmail(registerRequest.email)
+            val passwordValidation = InputValidator.validatePassword(registerRequest.password)
+            
+            val allErrors = usernameValidation.errors + emailValidation.errors + passwordValidation.errors
+            if (allErrors.isNotEmpty()) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    ErrorResponse("Validation failed: ${allErrors.joinToString(", ")}")
+                )
+                return@post
+            }
+            
             if (UserRepository.isUsernameTaken(registerRequest.username)) {
-                call.respond(HttpStatusCode.Conflict, com.bs.basicktorserver.model.ErrorResponse("Username already exists"))
+                call.respond(HttpStatusCode.Conflict, ErrorResponse("Username already exists"))
                 return@post
             }
 
@@ -30,7 +46,7 @@ fun Route.userRouting() {
                 call.respond(HttpStatusCode.Created, "Registration successful for ${registerRequest.username}")
             } catch (ex: ExposedSQLException) {
                 if (ex.isUniqueConstraintViolation()) {
-                    call.respond(HttpStatusCode.Conflict, com.bs.basicktorserver.model.ErrorResponse("Username already exists"))
+                    call.respond(HttpStatusCode.Conflict, ErrorResponse("Username already exists"))
                 } else {
                     throw ex
                 }
@@ -48,7 +64,7 @@ fun Route.userRouting() {
                 if (parsedLimit != null && (parsedLimit <= 0 || parsedLimit > 100)) {
                     call.respond(
                         HttpStatusCode.BadRequest,
-                        com.bs.basicktorserver.model.ErrorResponse("Query parameter 'limit' must be between 1 and 100")
+                        ErrorResponse("Query parameter 'limit' must be between 1 and 100")
                     )
                     return@get
                 }
@@ -56,7 +72,7 @@ fun Route.userRouting() {
                 if (parsedOffset != null && parsedOffset < 0L) {
                     call.respond(
                         HttpStatusCode.BadRequest,
-                        com.bs.basicktorserver.model.ErrorResponse("Query parameter 'offset' must be greater than or equal to 0")
+                        ErrorResponse("Query parameter 'offset' must be greater than or equal to 0")
                     )
                     return@get
                 }
@@ -72,18 +88,29 @@ fun Route.userRouting() {
                 if (userId == null) {
                     call.respond(
                         HttpStatusCode.BadRequest,
-                        com.bs.basicktorserver.model.ErrorResponse("Invalid user ID")
+                        ErrorResponse("Invalid user ID")
                     )
                     return@put
                 }
 
                 val updatedInfo = call.receive<RegistrationForm>()
+                
+                val usernameValidation = InputValidator.validateUsername(updatedInfo.username)
+                val emailValidation = InputValidator.validateEmail(updatedInfo.email)
+                
+                val allErrors = usernameValidation.errors + emailValidation.errors
+                if (allErrors.isNotEmpty()) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        ErrorResponse("Validation failed: ${allErrors.joinToString(", ")}")
+                    )
+                    return@put
+                }
 
-                // Check if the new username is already taken by another user
                 if (UserRepository.isUsernameTaken(updatedInfo.username, excludeUserId = userId)) {
                     call.respond(
                         HttpStatusCode.Conflict,
-                        com.bs.basicktorserver.model.ErrorResponse("Username '${updatedInfo.username}' is already taken")
+                        ErrorResponse("Username '${updatedInfo.username}' is already taken")
                     )
                     return@put
                 }
@@ -95,7 +122,7 @@ fun Route.userRouting() {
                 } else {
                     call.respond(
                         HttpStatusCode.NotFound,
-                        com.bs.basicktorserver.model.ErrorResponse("User $userId not found")
+                        ErrorResponse("User $userId not found")
                     )
                 }
             }
@@ -105,7 +132,7 @@ fun Route.userRouting() {
                 if (userId == null) {
                     call.respond(
                         HttpStatusCode.BadRequest,
-                        com.bs.basicktorserver.model.ErrorResponse("Invalid user ID")
+                        ErrorResponse("Invalid user ID")
                     )
                     return@delete
                 }
@@ -117,7 +144,7 @@ fun Route.userRouting() {
                 } else {
                     call.respond(
                         HttpStatusCode.NotFound,
-                        com.bs.basicktorserver.model.ErrorResponse("User $userId not found")
+                        ErrorResponse("User $userId not found")
                     )
                 }
             }

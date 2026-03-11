@@ -26,16 +26,19 @@ object DatabaseFactory {
 
         Database.connect(dataSource)
 
-        // Seed data if needed
-        transaction {
-            // Check if test user exists to avoid duplicate seed
-            val userExists = !Users.select { Users.username eq "testuser" }.empty()
-            if (!userExists) {
-                val hashPassword = BCrypt.hashpw("password123", BCrypt.gensalt())
-                Users.insert {
-                    it[Users.username] = "testuser"
-                    it[Users.email] = "email@domain.com"
-                    it[Users.password] = hashPassword
+        // Seed data if needed - only in development mode
+        val seedDataEnabled = System.getenv("SEED_DATA")?.toBoolean() ?: false
+        if (seedDataEnabled) {
+            transaction {
+                // Check if test user exists to avoid duplicate seed
+                val userExists = !Users.select { Users.username eq "testuser" }.empty()
+                if (!userExists) {
+                    val hashPassword = BCrypt.hashpw("password123", BCrypt.gensalt())
+                    Users.insert {
+                        it[Users.username] = "testuser"
+                        it[Users.email] = "email@domain.com"
+                        it[Users.password] = hashPassword
+                    }
                 }
             }
         }
