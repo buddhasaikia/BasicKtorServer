@@ -1,0 +1,19 @@
+# Docker build context exclusions
+.git
+.gitignore
+.gradle
+.idea
+*.iml
+build/
+db/
+.DS_Store
+*.md
+.vscode/
+.kotlin/
+gradle/.gradle/
+*.class
+*.jar
+*.war
+node_modules/
+coverage/
+reports/

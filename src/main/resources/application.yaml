@@ -1,4 +1,14 @@
 # Application configuration for BasicKtorServer
+# 
+# Configuration precedence (highest to lowest):
+# 1. Environment variables
+# 2. application-{profile}.yaml (where profile is set via ENVIRONMENT env var)
+# 3. application.yaml (defaults)
+#
+# This is the default configuration. Environment-specific overrides can be set via:
+# - application-development.yaml
+# - application-staging.yaml
+# - application-prod.yaml
 
 ktor:
   application:
@@ -6,27 +16,61 @@ ktor:
       - com.bs.basicktorserver.ApplicationKt.module
   deployment:
     port: 8080
+  cors:
+    allowHosts: "http://localhost:8080,http://localhost:3000"
 
+# JWT Configuration
+jwt:
+  audience: "my-api-audience"
+  issuer: "my-api-issuer"
+  # Secret should be set via JWT_SECRET environment variable (required in production)
+  # For development, an ephemeral secret is generated if not set
+  # Example: export JWT_SECRET="$(openssl rand -hex 32)"
+  secret: ""
+
+# Database Configuration
 database:
   driver: "org.h2.Driver"
-  url: "jdbc:h2:./db/data;DB_CLOSE_DELAY=-1;"
+  url: "jdbc:h2:./db/data;DB_CLOSE_DELAY=-1;MODE=MySQL"
   user: "root"
   password: ""
+  # Connection pool settings
+  maxPoolSize: 3
+  minimumIdle: 1
+
+# Environment Configuration
+environment: "development"
+
+# Feature Flags
+seedData: false
+seedUserPassword: ""
+
+# Logging Configuration
+logging:
+  level: "DEBUG"
+  # Specific logger configurations can be set in logback.xml
+
+# Application name and version
+app:
+  name: "BasicKtorServer"
+  version: "1.0.0"
 
 # Security configuration via environment variables:
 # JWT_SECRET - REQUIRED in production. Set to a secure random string (e.g., output of: openssl rand -hex 32)
-# ENVIRONMENT - Set to "production" to enforce JWT_SECRET requirement; otherwise uses ephemeral secret for dev/test
+# ENVIRONMENT - Set to "development", "staging", or "production"
+# DATABASE_URL - JDBC connection string (optional, overrides default)
+# DATABASE_USER - Database username (optional, defaults to "root")
+# DATABASE_PASSWORD - Database password (optional, defaults to empty)
 # SEED_DATA - Set to "true" to enable test data seeding on startup (disabled by default)
-# SEED_USER_PASSWORD - Optional seed user password (if not set, a random password is generated and logged once)
-# ktor.cors.allowHosts - Comma-separated list of allowed CORS origins (defaults to http://localhost:8080, http://localhost:3000)
-#
+# 
 # Example setup for development:
+#   export ENVIRONMENT=development
 #   export JWT_SECRET="dev-secret-key-change-in-production"
 #   export SEED_DATA=true
-#   export SEED_USER_PASSWORD="temporary-test-password"
 #
 # Example setup for production:
 #   export ENVIRONMENT=production
 #   export JWT_SECRET="$(openssl rand -hex 32)"
-#   export ktor.cors.allowHosts="https://app.example.com,https://api.example.com"
-
+#   export DATABASE_URL="jdbc:mysql://prod-db-host:3306/ktor_app"
+#   export DATABASE_USER="prod_user"
+#   export DATABASE_PASSWORD="prod_password"

@@ -1,0 +1,34 @@
+# Development Environment Configuration
+# Loaded when ENVIRONMENT=development or not specified
+
+ktor:
+  deployment:
+    port: 8080
+  cors:
+    allowHosts: "http://localhost:8080,http://localhost:3000,http://localhost:5173"
+
+# JWT Configuration (development - uses ephemeral secret if JWT_SECRET not set)
+jwt:
+  audience: "my-api-audience"
+  issuer: "my-api-issuer"
+  # In development, if JWT_SECRET is not set, a random secret is generated at runtime
+
+# Database Configuration (local H2 in-memory for fast testing)
+database:
+  driver: "org.h2.Driver"
+  url: "jdbc:h2:./db/dev;DB_CLOSE_DELAY=-1;MODE=MySQL"
+  user: "root"
+  password: ""
+  maxPoolSize: 5
+  minimumIdle: 2
+
+environment: "development"
+seedData: false
+
+# Logging - verbose for debugging
+logging:
+  level: "DEBUG"
+
+app:
+  name: "BasicKtorServer"
+  version: "1.0.0"
