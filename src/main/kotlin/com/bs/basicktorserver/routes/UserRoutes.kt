@@ -19,7 +19,7 @@ fun Route.userRouting() {
     route("/users") {
         post("/register") {
             val registerRequest = call.receive<RegisterRequest>()
-            println("Received registration for username=${registerRequest.username}, email=${registerRequest.email}")
+            call.application.environment.log.info("Received user registration request")
             
             val usernameValidation = InputValidator.validateUsername(registerRequest.username)
             val emailValidation = InputValidator.validateEmail(registerRequest.email)
@@ -28,14 +28,14 @@ fun Route.userRouting() {
             val allErrors = usernameValidation.errors + emailValidation.errors + passwordValidation.errors
             if (allErrors.isNotEmpty()) {
                 call.respond(
-                    HttpStatusCode.BadRequest,
-                    ErrorResponse("Validation failed: ${allErrors.joinToString(", ")}")
+                    status = HttpStatusCode.BadRequest,
+                    message = ErrorResponse("Validation failed: ${allErrors.joinToString(", ")}")
                 )
                 return@post
             }
             
             if (UserRepository.isUsernameTaken(registerRequest.username)) {
-                call.respond(HttpStatusCode.Conflict, ErrorResponse("Username already exists"))
+                call.respond(status = HttpStatusCode.Conflict, message = ErrorResponse("Username already exists"))
                 return@post
             }
 
@@ -46,7 +46,7 @@ fun Route.userRouting() {
                 call.respond(HttpStatusCode.Created, "Registration successful for ${registerRequest.username}")
             } catch (ex: ExposedSQLException) {
                 if (ex.isUniqueConstraintViolation()) {
-                    call.respond(HttpStatusCode.Conflict, ErrorResponse("Username already exists"))
+                    call.respond(status = HttpStatusCode.Conflict, message = ErrorResponse("Username already exists"))
                 } else {
                     throw ex
                 }

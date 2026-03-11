@@ -10,6 +10,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.mindrot.jbcrypt.BCrypt
+import java.util.*
 import javax.sql.DataSource
 
 object DatabaseFactory {
@@ -33,11 +34,20 @@ object DatabaseFactory {
                 // Check if test user exists to avoid duplicate seed
                 val userExists = !Users.select { Users.username eq "testuser" }.empty()
                 if (!userExists) {
-                    val hashPassword = BCrypt.hashpw("password123", BCrypt.gensalt())
+                    val seedPassword = System.getenv("SEED_USER_PASSWORD") ?: run {
+                        // Generate random password for seeded user if not provided
+                        UUID.randomUUID().toString().substring(0, 16)
+                    }
+                    val hashPassword = BCrypt.hashpw(seedPassword, BCrypt.gensalt())
                     Users.insert {
                         it[Users.username] = "testuser"
                         it[Users.email] = "email@domain.com"
                         it[Users.password] = hashPassword
+                    }
+                    // Log the password only once when seeding (should be captured during setup)
+                    if (System.getenv("SEED_USER_PASSWORD") == null) {
+                        println("[SEED] Test user 'testuser' created with temporary password: $seedPassword")
+                        println("[SEED] Please change this password immediately via the API")
                     }
                 }
             }
