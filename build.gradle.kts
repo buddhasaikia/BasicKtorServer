@@ -42,6 +42,8 @@ dependencies {
     implementation("io.ktor:ktor-server-status-pages:$ktorVersion") // or your DB driver (Postgres, MySQL, etc.)
     implementation("io.ktor:ktor-server-auth:$ktorVersion")
     implementation("io.ktor:ktor-server-auth-jwt:${ktorVersion}")
+    implementation("io.ktor:ktor-server-cors:$ktorVersion")
+    implementation("io.ktor:ktor-server-rate-limit:$ktorVersion")
     implementation("org.mindrot:jbcrypt:${jbcryptVersion}")
 
     // Ktor Client Dependencies
