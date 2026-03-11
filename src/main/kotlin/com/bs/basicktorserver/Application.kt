@@ -62,10 +62,11 @@ fun Application.module() {
             )
         }
         exception<Throwable> { call, cause ->
-            cause.printStackTrace()
+            // Log the detailed exception server-side
+            call.application.environment.log.error("Unhandled exception: ${cause.message}", cause)
             call.respond(
                 status = HttpStatusCode.InternalServerError,
-                message = ErrorResponse("An unexpected error occurred: ${cause.message}")
+                message = ErrorResponse("An unexpected error occurred. Please try again later.")
             )
         }
     }
