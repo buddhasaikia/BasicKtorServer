@@ -52,3 +52,10 @@ dependencies {
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
 }
+
+tasks.test {
+    useJUnit()
+    filter {
+        failOnNoDiscoveredTests = false
+    }
+}
