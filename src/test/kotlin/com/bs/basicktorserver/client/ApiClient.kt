@@ -29,7 +29,7 @@ class ApiClient {
             setBody(
                 UserCredentials(
                     username = "buddha",
-                    password = "123456"
+                    password = "password123"
                 )
             )
         }
