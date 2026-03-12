@@ -69,7 +69,7 @@ jobs:
           cache: gradle
 
       - name: Run linting
-        run: ./gradlew check --no-daemon --info || true
+        run: ./gradlew check --no-daemon --info
 
   docker-build:
     runs-on: ubuntu-latest

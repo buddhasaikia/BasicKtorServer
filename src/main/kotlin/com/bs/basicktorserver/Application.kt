@@ -51,7 +51,7 @@ fun Application.module() {
 
         // Log all routes except health checks (if you add them)
         filter { call ->
-            !call.request.path().startsWith("/health")
+            call.request.path() != "/"
         }
     }
 

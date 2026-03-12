@@ -13,9 +13,7 @@ object Config {
     lateinit var JWT_SECRET: String
     const val JWT_NAME = "auth-jwt"
     
-    // Server Configuration
-    var SERVER_PORT: Int = 8080
-    
+
     // Database Configuration
     lateinit var DATABASE_DRIVER: String
     lateinit var DATABASE_URL: String
@@ -31,7 +29,7 @@ object Config {
         
         val environment = System.getenv("ENVIRONMENT")?.takeIf { it.isNotBlank() }
             ?: config.tryGetString("environment") ?: "development"
-        ENVIRONMENT = environment
+        ENVIRONMENT = environment.lowercase()
         
         // Load JWT configuration
         JWT_AUDIENCE = System.getenv("JWT_AUDIENCE")?.takeIf { it.isNotBlank() }
@@ -55,10 +53,7 @@ object Config {
             }
         }
         
-        // Load server configuration
-        SERVER_PORT = System.getenv("SERVER_PORT")?.toIntOrNull()
-            ?: config.tryGetString("ktor.deployment.port")?.toIntOrNull() ?: 8080
-        
+
         // Load database configuration
         DATABASE_DRIVER = System.getenv("DATABASE_DRIVER")?.takeIf { it.isNotBlank() }
             ?: config.tryGetString("database.driver") ?: "org.h2.Driver"
@@ -73,7 +68,11 @@ object Config {
             ?: config.tryGetString("database.password") ?: ""
         
         // Load seed data configuration
-        SEED_DATA_ENABLED = System.getenv("SEED_DATA")?.equals("true", ignoreCase = true) ?: false
+        val seedFromEnv = System.getenv("SEED_DATA")?.takeIf { it.isNotBlank() }
+        SEED_DATA_ENABLED = when {
+            seedFromEnv != null -> seedFromEnv.equals("true", ignoreCase = true)
+            else -> config.tryGetString("seedData")?.equals("true", ignoreCase = true) ?: false
+        }
     }
     
     // Helper function to safely get string from config

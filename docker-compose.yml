@@ -25,7 +25,7 @@ services:
     restart: on-failure
 
   h2-console:
-    image: oscarfonts/h2:latest
+    image: oscarfonts/h2:1.4.199
     container_name: basicktor-h2
     ports:
       - "8081:8082"
@@ -41,5 +41,4 @@ networks:
   ktor-network:
     driver: bridge
 
-volumes:
-  db:
+volumes: {}
