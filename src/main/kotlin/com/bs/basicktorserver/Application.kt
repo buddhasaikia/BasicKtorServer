@@ -36,6 +36,20 @@ fun Application.module() {
     // Configure request logging based on environment
     install(CallLogging) {
         level = if (Config.ENVIRONMENT == "production") Level.INFO else Level.DEBUG
+        // Log request info in MDC
+        mdc("method") { call -> call.request.httpMethod.value }
+        mdc("path") { call -> call.request.path() }
+        mdc("query") { call -> call.request.queryString() }
+
+        format { call ->
+            val status = call.response.status()?.value ?: "???"
+            val method = call.request.httpMethod.value
+            val path = call.request.path()
+            val queryParams = call.request.queryString().takeIf { it.isNotEmpty() }?.let { "?$it" } ?: ""
+            "$method $path$queryParams -> HTTP $status"
+        }
+
+        // Log all routes except health checks (if you add them)
         filter { call ->
             !call.request.path().startsWith("/health")
         }
@@ -56,7 +70,7 @@ fun Application.module() {
                     null
                 }
             }
-            challenge { defaultScheme, realm ->
+            challenge { _, _ ->
                 call.respond(
                     HttpStatusCode.Unauthorized,
                     ErrorResponse("Token is not valid or has expired")

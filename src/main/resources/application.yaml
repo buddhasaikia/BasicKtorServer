@@ -42,7 +42,7 @@ database:
 environment: "development"
 
 # Feature Flags
-seedData: false
+seedData: true
 seedUserPassword: ""
 
 # Logging Configuration
