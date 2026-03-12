@@ -7,9 +7,9 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/app.log</file>
+        <file>app.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/app.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>app.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>7</maxHistory>
         </rollingPolicy>
         <encoder>
@@ -23,8 +23,8 @@
         <appender-ref ref="FILE"/>
     </root>
 
-    <!-- enable DEBUG for your app package -->
-    <logger name="com.bs.basicktorserver" level="DEBUG"/>
+    <!-- application package log level is configurable via APP_LOG_LEVEL (default INFO) -->
+    <logger name="com.bs.basicktorserver" level="${APP_LOG_LEVEL:-INFO}"/>
     <logger name="org.eclipse.jetty" level="INFO"/>
     <logger name="io.netty" level="INFO"/>
 

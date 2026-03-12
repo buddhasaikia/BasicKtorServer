@@ -10,15 +10,16 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.mindrot.jbcrypt.BCrypt
+import com.bs.basicktorserver.config.Config
 import java.util.*
 import javax.sql.DataSource
 
 object DatabaseFactory {
     fun init(config: ApplicationConfig) {
-        val driverClassName = config.property("database.driver").getString()
-        val jdbcUrl = config.property("database.url").getString()
-        val user = config.property("database.user").getString()
-        val password = config.property("database.password").getString()
+        val driverClassName = Config.DATABASE_DRIVER
+        val jdbcUrl = Config.DATABASE_URL
+        val user = Config.DATABASE_USER
+        val password = Config.DATABASE_PASSWORD
 
         val dataSource = createHikariDataSource(jdbcUrl, driverClassName, user, password)
         
@@ -28,7 +29,7 @@ object DatabaseFactory {
         Database.connect(dataSource)
 
         // Seed data if needed - only in development mode
-        val seedDataEnabled = System.getenv("SEED_DATA")?.toBoolean() ?: false
+        val seedDataEnabled = Config.SEED_DATA_ENABLED
         if (seedDataEnabled) {
             transaction {
                 // Check if test user exists to avoid duplicate seed

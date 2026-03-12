@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Copy gradle wrapper and build files
 COPY gradle/ gradle/
-COPY gradlew gradlew.kts build.gradle.kts settings.gradle.kts gradle.properties ./
+COPY gradlew build.gradle.kts settings.gradle.kts gradle.properties ./
 
 # Download dependencies (this layer is cached if these files don't change)
 RUN ./gradlew --version
@@ -22,8 +22,9 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-# Create non-root user for security
-RUN addgroup -S appuser && adduser -S appuser -G appuser
+# Create non-root user for security and install wget for healthcheck
+RUN set -x && apk add --no-cache wget && \
+    addgroup -S appuser && adduser -S appuser -G appuser
 
 # Copy built JAR from builder stage
 COPY --from=builder /app/build/libs/basicktorserver-all.jar app.jar

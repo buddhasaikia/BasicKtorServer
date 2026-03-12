@@ -2,13 +2,13 @@
 # 
 # Configuration precedence (highest to lowest):
 # 1. Environment variables
-# 2. application-{profile}.yaml (where profile is set via ENVIRONMENT env var)
+# 2. application-{profile}.yaml (must be loaded explicitly via -config=application-{profile}.yaml)
 # 3. application.yaml (defaults)
 #
 # This is the default configuration. Environment-specific overrides can be set via:
 # - application-development.yaml
 # - application-staging.yaml
-# - application-prod.yaml
+# - application-production.yaml
 
 ktor:
   application:
@@ -42,13 +42,9 @@ database:
 environment: "development"
 
 # Feature Flags
-seedData: true
+seedData: false
 seedUserPassword: ""
 
-# Logging Configuration
-logging:
-  level: "DEBUG"
-  # Specific logger configurations can be set in logback.xml
 
 # Application name and version
 app:
