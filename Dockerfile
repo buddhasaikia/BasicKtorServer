@@ -27,7 +27,7 @@ RUN set -x && apk add --no-cache wget && \
     addgroup -S appuser && adduser -S appuser -G appuser
 
 # Copy built JAR from builder stage
-COPY --from=builder /app/build/libs/basicktorserver-all.jar app.jar
+COPY --from=builder /app/build/libs/BasicKtorServer-all.jar app.jar
 RUN chown -R appuser:appuser /app
 
 USER appuser

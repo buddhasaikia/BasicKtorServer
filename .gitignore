@@ -39,3 +39,4 @@ out/
 db/
 *.mv.db
 logs/app.log
+*.log

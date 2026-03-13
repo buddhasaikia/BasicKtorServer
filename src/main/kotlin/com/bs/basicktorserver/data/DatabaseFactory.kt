@@ -1,13 +1,11 @@
 package com.bs.basicktorserver.data
 
-import com.bs.basicktorserver.data.models.Notes
 import com.bs.basicktorserver.data.models.Users
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.config.*
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.mindrot.jbcrypt.BCrypt
 import com.bs.basicktorserver.config.Config
