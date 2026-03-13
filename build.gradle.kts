@@ -9,13 +9,20 @@ plugins {
     kotlin("jvm") version "2.3.0"
     kotlin("plugin.serialization") version "2.3.0"
     id("io.ktor.plugin") version "3.4.0"
+    id("com.google.cloud.tools.jib") version "3.4.0"
 }
 
 group = "com.bs.basicktorserver"
 version = "0.0.1"
 
 application {
-    mainClass = "io.ktor.server.netty.EngineMain"
+    mainClass.set("io.ktor.server.netty.EngineMain")
+}
+
+jib {
+    container {
+        mainClass = "io.ktor.server.netty.EngineMain"
+    }
 }
 
 kotlin {
